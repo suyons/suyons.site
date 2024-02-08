@@ -1,0 +1,231 @@
+---
+title: Docker 컨테이너에서 MySQL 실행하기
+date: '2024-02-08'
+tags: ['docker', 'database']
+draft: false
+summary: Mac 환경에서 Docker를 통해 MySQL 서버를 실행하는 방법을 소개합니다.
+---
+
+# Docker 컨테이너에서 MySQL 실행하기
+
+## Mac 터미널에서
+
+### 설치 전 확인
+
+1. 기존에 설치된 MySQL이 있다면 실행 중인지 확인
+
+```
+mysql -v
+```
+
+- ERROR 1045: 실행 중, 먼저 종료해야 한다.
+
+```
+ERROR 1045 (28000): Access denied for user 'young'@'localhost' (using password: NO)
+```
+
+- ERROR 2002: 실행 중이지 않음, 그대로 진행 가능.
+
+```
+ERROR 2002 (HY000): Can't connect to local MySQL server through socket '/tmp/mysql.sock' (2)
+```
+
+### Docker 시작하기
+
+1. MySQL 이미지 다운로드
+
+```
+docker pull mysql
+```
+
+```
+Using default tag: latest
+latest: Pulling from library/mysql
+0647c03756d6: Pull complete
+7c571053c52e: Pull complete
+d6453741958d: Pull complete
+03e97ad7011a: Pull complete
+65f90da87686: Pull complete
+389c2a8fa113: Pull complete
+c9ec19ee1f6a: Pull complete
+fe4ac7a81f6f: Pull complete
+425626fff053: Pull complete
+b24585fbe705: Pull complete
+Digest: sha256:2a9ef1075ff30c65bbcf4f96b25a03ea3b3f492c284e6c4a612c269ce4c5bb19
+Status: Downloaded newer image for mysql:latest
+docker.io/library/mysql:latest
+
+What's Next?
+  View a summary of image vulnerabilities and recommendations → docker scout quickview mysql
+```
+
+2. `mysql` 이미지를 컨테이너에서 실행하기
+
+- ROOT 계정 암호는 1234로 설정, 포트번호는 3306 기본값
+- Docker에서 이미지-컨테이너의 개념은 Java에서의 클래스-인스턴스 개념과 비슷하다 생각하자.
+
+```
+docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=1234 -d -p 3306:3306 mysql
+```
+
+```
+ca14590ae247b4bbb0114a815414cf4c60bec8b3dd3ffde895a47d8401c005c1
+```
+
+3. 컨테이너가 정상적으로 실행되었는지 확인
+
+```
+docker ps -a
+```
+
+```
+CONTAINER ID   IMAGE     COMMAND                  CREATED              STATUS              PORTS                               NAMES
+ca14590ae247   mysql     "docker-entrypoint.s…"   About a minute ago   Up About a minute   0.0.0.0:3306->3306/tcp, 33060/tcp   mysql-container
+```
+
+4. MySQL 컨테이너에 접속
+
+```
+docker exec -it mysql-container bash
+```
+
+5. 이 시점부터 Mac 터미널에서 리눅스 bash 쉘로 변경되어 다음과 같이 표시된다.
+
+```
+bash-4.4#
+```
+
+## Bash 쉘에서
+
+### MySQL 초기 설정
+
+1. MySQL 접속
+
+- 위의 `MYSQL_ROOT_PASSWORD=1234`에 설정한 값이다.
+
+```
+mysql -u root -p
+```
+
+```
+Enter password: 1234
+```
+
+```
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 8
+Server version: 8.3.0 MySQL Community Server - GPL
+
+Copyright (c) 2000, 2024, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+```
+
+2. 일반 사용자 및 데이터베이스 생성
+
+- ID: sooyoung, PW: 1234
+
+```
+CREATE USER 'sooyoung'@'%' IDENTIFIED BY '1234';
+CREATE DATABASE sooyoung;
+```
+
+3. 생성한 사용자에게 모든 권한 부여
+
+```
+GRANT ALL PRIVILEGES ON _._ TO 'sooyoung'@'%';
+```
+
+4. 권한 적용
+
+```
+FLUSH PRIVILEGES;
+```
+
+5. 시간대를 UTC에서 UTC+9로 변경
+
+```
+SET GLOBAL time_zone = '+9:00';
+```
+
+6. MySQL 종료하여 리눅스 bash 쉘로 돌아가기
+
+```
+exit
+```
+
+### MySQL 시작하기
+
+1. `sooyoung` 계정으로 MySQL 접속
+
+- -D: 데이터베이스, -u: 사용자, -p: 비밀번호
+
+```
+mysql -D sooyoung -u sooyoung -p
+```
+
+```
+Enter password: 1234
+```
+
+2. 현재 시간 출력하기
+
+```
+SELECT NOW();
+```
+
+```
+mysql> SELECT NOW();
++---------------------+
+| NOW()               |
++---------------------+
+| 2024-02-08 22:04:39 |
++---------------------+
+1 row in set (0.00 sec)
+```
+
+### 종료하기
+
+1. MySQL 종료
+
+```
+exit
+```
+
+```
+Bye
+bash-4.4#
+```
+
+2. bash 쉘 종료하여 Mac 터미널로 복귀
+
+```
+exit
+```
+
+```
+young@Sooyoung-Mac Desktop %
+```
+
+3. Docker 컨테이너 종료하기
+
+```
+docker stop mysql-container
+```
+
+4. 컨테이너 종료 결과 확인하기
+
+```
+docker ps -a
+```
+
+```
+CONTAINER ID   IMAGE     COMMAND                  CREATED          STATUS                     PORTS     NAMES
+ca14590ae247   mysql     "docker-entrypoint.s…"   44 minutes ago   Exited (0) 7 seconds ago             mysql-container
+```
