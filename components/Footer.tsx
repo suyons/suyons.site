@@ -24,7 +24,7 @@ export default function Footer() {
           <Link href="/">{siteMetadata.title}</Link> */}
         </div>
         <div className="mb-8 text-sm text-gray-500 dark:text-gray-400">
-          <Link href="https://github.com/suyons/suyons.github.io">@suyons</Link>
+          <Link href="https://github.com/suyons/suyons.site">@suyons</Link>
         </div>
       </div>
     </footer>
