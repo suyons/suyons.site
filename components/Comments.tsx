@@ -8,7 +8,7 @@ export default function Comments() {
   return (
     <>
       <Giscus
-        id="comments"
+        id="comment"
         repo="suyons/suyons.site"
         repoId="R_kgDOLOqmNQ"
         categoryId="DIC_kwDOLOqmNc4CdNvO"
