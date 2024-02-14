@@ -1,0 +1,96 @@
+---
+title: Elastic Beanstalk에 의해 생성된 S3 버킷을 삭제할 수 없을 때
+date: '2024-02-05'
+tags: ['aws']
+draft: false
+summary: AWS에서 S3 버킷 삭제가 안 된다면?
+---
+
+## 01 문제 상황
+
+1. Elastic Beanstalk 환경을 만들면서 자동 생성된 S3 버킷을 삭제 시도하면
+   다음과 같이 오류가 표시되었다.
+
+   > 버킷 "elasticbeanstalk-ap-northeast-2-000000000000"을 삭제할 권한이 없습니다.
+
+   ![](/blogimage/delete-s3-bucket-20240214-131752.png)
+
+## 02 문제 분석
+
+1. 오류 메시지의 하단에 집중해 보았다.
+   > IAM 사용자 정책에 s3:DeleteBucket 권한이 있으며 버킷을 삭제할 수 없는 경우, 해당 버킷 정책에 s3:DeleteBucket과 관련된 거부 조항이 있을 수 있습니다. 버킷을 삭제하려면 s3:DeleteBucket 조항을 삭제하거나 해당 버킷 정책을 삭제해야 합니다.
+2. 지금 내가 접속한 계정은 루트 계정이므로 IAM 사용자 정책에 해당 권한이 없을 리는 없다고 생각했다. 그럼 다음 내용을 확인해 보았다.
+   > 해당 버킷 정책에 s3:DeleteBucket과 관련된 거부 조항이 있을 수 있습니다.
+3. 버킷 정책을 확인해 보자.
+
+   ![](/blogimage/delete-s3-bucket-20240214-131820.png)
+
+```
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Sid": "eb-af163bf3-d27b-4712-b795-d1e33e331ca4",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::767397673494:role/EC2-instance-role"
+            },
+            "Action": [
+                "s3:ListBucket",
+                "s3:ListBucketVersions",
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::elasticbeanstalk-ap-northeast-2-767397673494",
+                "arn:aws:s3:::elasticbeanstalk-ap-northeast-2-767397673494/resources/environments/*"
+            ]
+        },
+        {
+            "Sid": "eb-58950a8c-feb6-11e2-89e0-0800277d041b",
+            "Effect": "Deny",
+            "Principal": {
+                "AWS": "*"
+            },
+            "Action": "s3:DeleteBucket",
+            "Resource": "arn:aws:s3:::elasticbeanstalk-ap-northeast-2-767397673494"
+        }
+    ]
+}
+```
+
+4. `Statement` key 아래의 2번째 객체를 보면 `s3:DeleteBucket`에 대해 `Deny`가 설정되어 있다.
+
+## 03 문제 해결
+
+1. 21행~29행의 블럭을 삭제한다.
+
+- 삭제 후 JSON
+
+```
+{
+    "Version": "2008-10-17",
+    "Statement": [
+        {
+            "Sid": "eb-af163bf3-d27b-4712-b795-d1e33e331ca4",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::767397673494:role/EC2-instance-role"
+            },
+            "Action": [
+                "s3:ListBucket",
+                "s3:ListBucketVersions",
+                "s3:GetObject",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::elasticbeanstalk-ap-northeast-2-767397673494",
+                "arn:aws:s3:::elasticbeanstalk-ap-northeast-2-767397673494/resources/environments/*"
+            ]
+        }
+    ]
+}
+```
+
+2. 삭제 완료
+   ![](/blogimage/delete-s3-bucket-20240214-131841.png)
