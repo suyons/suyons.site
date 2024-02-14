@@ -1,3 +1,16 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="xMidYMid meet" viewBox="344.5639097744361 330.27819548872174 111.73684210526318 91.21804511278197" width="53.87" height="43.61"><defs><path d="M453.3 331.28L453.3 359.85L388.64 418.5L388.64 388.42L453.3 331.28Z" id="aFZf6T5ED"></path><linearGradient id="gradientb2ThqnP5Op" gradientUnits="userSpaceOnUse" x1="420.97" y1="331.28" x2="420.97" y2="418.5"><stop style="stop-color: #06b6d4;stop-opacity: 1" offset="0%"></stop><stop style="stop-color: #67e8f9;stop-opacity: 1" offset="100%"></stop></linearGradient><path d="M410.23 331.28L410.23 359.85L345.56 418.5L345.56 388.42L410.23 331.28Z" id="a9fehgwfM"></path><linearGradient id="gradientk1wNV9Ostb" gradientUnits="userSpaceOnUse" x1="377.89" y1="331.28" x2="377.89" y2="418.5"><stop style="stop-color: #06b6d4;stop-opacity: 1" offset="0%"></stop><stop style="stop-color: #67e8f9;stop-opacity: 1" offset="100%"></stop></linearGradient></defs><g><g><use xlink:href="#aFZf6T5ED" opacity="1" fill="url(#gradientb2ThqnP5Op)"></use></g><g><use xlink:href="#a9fehgwfM" opacity="1" fill="url(#gradientk1wNV9Ostb)"></use></g></g></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="layer" xmlns="http://www.w3.org/2000/svg" width="12.99mm" height="11.23mm" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 460.31 398.02">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#gradient1);
+        stroke-width: 0px;
+      }
+    </style>
+    <linearGradient id="gradient1" x1="230.16" y1="398.02" x2="230.16" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7acadd"/>
+      <stop offset="1" stop-color="#1dadc7"/>
+    </linearGradient>
+  </defs>
+  <path class="cls-1" d="M259.69,149.66l-86.56,148.85-58.25-99.35h57.84l29.53-49.9h-116.09L0,0h173.93l28.31,50.16h-114.47l28.31,49.75h114.88l28.72,49.75ZM402.47,0l-56.63,99.51L288.81,0h-58.65l86.56,149.26-115.28,198.61,28.72,50.16L460.31,0h-57.84Z"/>
+</svg>

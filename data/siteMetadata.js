@@ -1,16 +1,16 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'suyons.log',
+  title: 'suyons.site',
   author: 'Kim Sooyoung',
-  headerTitle: 'suyons.log',
-  description: 'Hello! I am a software engineer who loves to learn and share knowledge.',
+  headerTitle: 'suyons.site',
+  description: '풀스택 개발을 향해 공부하는 모든 과정을 기록합니다',
   language: 'ko-kr',
   theme: 'system', // system, dark or light
-  siteUrl: 'https://suyons.github.io',
-  siteRepo: 'https://github.com/suyons/suyons.github.io',
+  siteUrl: 'https://suyons.site',
+  siteRepo: 'https://github.com/suyons/suyons.site',
   siteLogo: '/static/images/logo.png',
-  socialBanner: '/static/images/twitter-card.png',
-  mastodon: 'https://mastodon.social/@mastodonuser',
+  socialBanner: '/static/images/banner.png',
+  /* mastodon: 'https://mastodon.social/@mastodonuser', */
   email: 'su02ga@outlook.com',
   github: 'https://github.com/suyons',
   /* twitter: 'https://twitter.com/Twitter',

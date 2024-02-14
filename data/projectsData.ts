@@ -7,20 +7,18 @@ interface Project {
 
 const projectsData: Project[] = [
   {
-    title: 'clickcloud',
-    description: `What if you could look up any information in the world? Webpages, images, videos
-    and more. Google has many features to help you find exactly what you're looking
-    for.`,
+    title: 'Clickcloud',
+    description: `Google Maps에서 주요 도시의 날씨 실황을 아이콘으로 표시합니다.
+    매 시간마다 주요 도시의 날씨 데이터를 업데이트합니다.`,
     imgSrc: '/static/images/clickcloud.png',
     href: 'https://github.com/suyons/clickcloud',
   },
   {
-    title: 'The Time Machine',
-    description: `Imagine being able to travel back in time or to the future. Simple turn the knob
-    to the desired date and press "Go". No more worrying about lost keys or
-    forgotten headphones with this simple yet affordable solution.`,
-    imgSrc: '/static/images/time-machine.jpg',
-    href: '/blog/the-time-machine',
+    title: 'Strangechat',
+    description: `로컬 네트워크 내에서 이용 가능한 GUI 채팅 앱입니다.
+    Java의 Swing을 이용하여 개발하였습니다.`,
+    imgSrc: '/static/images/strangechat.png',
+    href: 'https://github.com/suyons/strangechat',
   },
 ]
 
