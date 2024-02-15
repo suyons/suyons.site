@@ -36,7 +36,7 @@ module.exports = {
               '&:hover': {
                 color: `${theme('colors.primary.600')}`,
               },
-              code: { color: theme('colors.primary.400') },
+              code: { color: theme('colors.primary.600') },
             },
             'h1,h2': {
               fontWeight: '700',
@@ -46,7 +46,15 @@ module.exports = {
               fontWeight: '600',
             },
             code: {
-              color: theme('colors.indigo.500'),
+              color: theme('colors.primary.600'),
+              padding: theme('padding.1'),
+              // borderRadius: theme('borderRadius.DEFAULT'),
+            },
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
             },
           },
         },
@@ -57,7 +65,7 @@ module.exports = {
               '&:hover': {
                 color: `${theme('colors.primary.400')}`,
               },
-              code: { color: theme('colors.primary.400') },
+              code: { color: theme('colors.primary.600') },
             },
             'h1,h2,h3,h4,h5,h6': {
               color: theme('colors.gray.100'),

@@ -1,0 +1,100 @@
+---
+title: Nginx 502 Bad Gateway
+date: '2024-01-23'
+tags: ['aws']
+draft: false
+summary: AWS EC2에서 표시하는 Nginx 502 Bad Gateway 오류를 해결하는 방법
+---
+
+## 01 문제 상황
+
+1. Elastic Beanstalk에 Maven SpringBoot 프로젝트를 빌드한 `.jar` 파일을 업로드하여 실행한 후 `http://공개 IP주소/`로 GET 요청을 보내면 `502 Bad Gateway` 오류가 표시되었다.
+
+## 02 Nginx의 역할
+
+1. 깡통 리눅스가 설치되어 있는 EC2와 달리, Elastic Beanstalk에는 JAR 파일을 실행하기 위한 Corretto OpenJDK 17이 설치되어 있고, Nginx가 설치되어 있다.
+2. Nginx가 무엇인지 검색해 보니 리버스 프록시 등 어려운 용어가 많았다. 내가 이를 해석한 결과 `아파트 경비아저씨`의 역할을 한다고 생각했다.
+3. 만약 내가 아파트 501호에 살고 있고, 경비아저씨가 1층에 상주하고 계신다 하자.
+4. 외부 손님 (클라이언트)가 501호 (JAR 패키지에 내장된 톰캣)에 와서 물건을 가져 가려면 (HTTP GET 요청) 경비아저씨의 검사를 반드시 통과해야 한다.
+5. 만약 내가 경비아저씨에게 "우리 집에 귀중품 훔치러 오는 도둑놈이 있으면 오지 못하게 해 주세요" 요청한다면 (configuration 파일), 경비아저씨가 도둑놈의 방문을 (클라이언트가 접근하면 안 되는 API path, 포트번호 등에 대한 접근) 막아 줄 것이고
+6. 만약 우리 집이 인기가 너무 좋아서 사람들이 아파트 1층에 길게 줄을 서고 있다면, 경비아저씨가 "가져갈 짐이 많은 사람은 좀 나중에 처리할 테니까 기다려 보세요!" (Non-blocking), "여기 말고 옆 집 가세요!" (Load balancing) 대처를 잘 해 줄 것이다.
+
+## 03 문제 분석
+
+1. HTTP 프로토콜은 기본값으로 80번 포트를 이용하므로 SpringBoot 프로젝트의 `/src/main/resources/application.properties` 파일에 `server.port=80` 속성이 지정되어 있었다.
+2. 그러나 Nginx는 외부포트 80번을 개방하여 `localhost:5000`으로 넘겨 주는 경비아저씨이기 때문에 `server.port=5000`으로 수정해야 했다.
+3. 여기 블로그 글을 참고하여
+   `application.properties`도 수정하고
+   `Elastic Beanstalk`에서 환경 속성에 `SERVER_PORT = 5000` 또한 추가했지만 여전히 해결되지 않았다.
+4. 그렇게 Nginx 설정부터 뭔가 잘못되었구나 생각이 들었다.
+
+## 04 문제 해결
+
+1. vi 편집기로 Nginx의 config 파일을 열어 보았다.
+
+```
+[root@ip-000-000-000-000 ~]# vi /etc/nginx/nginx.conf
+```
+
+2. 첫 행에 `user = nginx;` 부분이 뭔가 걸렸다.
+   지금 EC2 인스턴스에 SSH 접속해서 보면 `nginx`라는 계정이 없었기 때문이다.
+
+- Elastic Beanstalk은 EC2의 깡통 리눅스 위에 OpenJDK 설치 등 개발 환경 준비를 알아서 해 주는 서비스이다. 사용자는 리눅스 CLI 조작법을 모르더라도 코드 작성에만 집중하여 훌륭한 `.jar` 파일만 제공해 주면 되는 것이다.
+- 사실 처음에는 Elastic Beanstalk으로 시도하다가 계속 잡다한 오류가 발생하는 걸 보며 속 터져서 EC2로 갈아탔다. 나는 리눅스 조작이 익숙해서 크게 어렵진 않았다.
+
+```
+#Elastic Beanstalk Nginx Configuration File
+
+user                    nginx;
+error_log               /var/log/nginx/error.log warn;
+pid                     /var/run/nginx.pid;
+worker_processes        auto;
+worker_rlimit_nofile    200000;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    server_tokens off;
+
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+
+    include       conf.d/*.conf;
+
+    map $http_upgrade $connection_upgrade {
+        default     "upgrade";
+    }
+
+    server {
+        listen        80 default_server;
+        access_log    /var/log/nginx/access.log main;
+
+        client_header_timeout 60;
+        client_body_timeout   60;
+        keepalive_timeout     60;
+        gzip                  off;
+        gzip_comp_level       4;
+        gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+
+        # Include the Elastic Beanstalk generated locations
+        include conf.d/elasticbeanstalk/*.conf;
+    }
+}
+```
+
+3. 나는 리눅스에서 이유는 모르겠지만 뭔가 안 될 때는 권한 문제이므로 `chmod` 또는 `sudo`가 만병통치약이라 믿는 바보이므로 다음과 같이 수정했다.
+   `user nginx;` → `user root;`
+
+4. VI 에디터에서 `:wq!`를 입력하여 저장하고 편집기를 닫았다.
+
+5. Nginx를 재시작한 이후 `502 Bad Gateway` 오류가 표시되지 않았다.
+
+```
+[root@ip-000-000-000-000 ~]# systemctl restart nginx
+```
