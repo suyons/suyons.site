@@ -43,11 +43,11 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
               <div>
                 <PageTitle>{title}</PageTitle>
               </div>
-              <div className="flex justify-between">
-                <dl className="pb-1 pt-6">
+              <div className="block justify-between md:flex">
+                <dl className="pb-1 pt-6 md:w-1/2">
                   <dt className="sr-only">Authors</dt>
                   <dd>
-                    <ul className="flex flex-wrap justify-center gap-4 sm:space-x-12 xl:block xl:space-x-0 xl:space-y-8">
+                    <ul className="sm:space-x-12 xl:block xl:space-x-0 xl:space-y-8">
                       {authorDetails.map((author) => (
                         <li className="flex items-center space-x-2" key={author.name}>
                           {author.avatar && (
@@ -79,9 +79,9 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                     </ul>
                   </dd>
                 </dl>
-                <dl className="pb-1 pt-6">
+                <dl className="pb-1 text-right md:w-1/2 md:pt-6">
                   <dt className="sr-only">Published on</dt>
-                  <dd className="text-base font-medium leading-6 text-gray-500 dark:text-gray-400">
+                  <dd className="text-base font-medium leading-8 text-gray-500 dark:text-gray-400">
                     <time dateTime={date}>
                       {new Date(date).toLocaleDateString(siteMetadata.locale, postDateTemplate)}
                     </time>
@@ -125,9 +125,9 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                   </div>
                 )}
                 {(next || prev) && (
-                  <div className="flex-auto justify-between space-y-3 py-3 xl:inline xl:py-8">
+                  <div className="block space-y-8 py-4 text-left xl:flex xl:w-full xl:justify-between xl:space-y-0 xl:py-8">
                     {prev && prev.path && (
-                      <div>
+                      <div className="xl:w-1/2">
                         <h2 className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                           Previous Article
                         </h2>
@@ -137,7 +137,7 @@ export default function PostLayout({ content, authorDetails, next, prev, childre
                       </div>
                     )}
                     {next && next.path && (
-                      <div>
+                      <div className="xl:w-1/2 xl:text-right">
                         <h2 className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
                           Next Article
                         </h2>
