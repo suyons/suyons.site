@@ -28,7 +28,7 @@ export default function Home({ posts }) {
                   <div className="space-y-2 xl:grid xl:grid-cols-4 xl:items-baseline xl:space-y-0">
                     <dl>
                       <dt className="sr-only">Published on</dt>
-                      <dd className="space-text-base space-x-3 font-medium leading-6 text-gray-500 dark:text-gray-400 xl:flex-auto xl:space-x-0">
+                      <dd className="space-text-base space-x-3 font-medium leading-6 text-gray-500 dark:text-gray-400">
                         <time dateTime={date}>{formatDate(date, siteMetadata.locale)}</time>
                         {tags.map((tag) => (
                           <Tag key={tag} text={tag} />
