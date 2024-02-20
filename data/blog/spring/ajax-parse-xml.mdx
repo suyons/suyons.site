@@ -1,0 +1,723 @@
+---
+title: AJAX 예제 - RSS 피드 XML 파싱 (Feat. jQuery)
+date: '2024-01-17'
+tags: ['spring']
+draft: false
+summary: 서버에서 SpringBoot 컨트롤러를, 클라이언트에서 jQuery의 $.ajax 함수를 이용하여 XML 데이터를 파싱하는 예제를 소개합니다.
+---
+
+## 파일 위치
+
+![Eclipse 프로젝트 폴더](/blogimage/ajax-parse-xml-20240220-095124.png)
+
+- Controller
+  `/src/main/java/kosmo/newsxml/controller/SubmitController.java`
+- View
+  `/src/main/resources/static/index.html`
+
+## 1단계: 입력 문자열 그대로 출력하기
+
+### Controller
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class SubmitController {
+    @PostMapping("/submit")
+    @ResponseBody
+    public String postSubmit(@RequestParam("inputText") String inputText) {
+        System.out.println(inputText);
+        return inputText;
+    }
+}
+```
+
+### View
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>Input Form</title>
+  </head>
+  <body>
+    <form action="/submit" method="post">
+      <label for="inputText">Input Text:</label>
+      <input type="text" id="inputText" name="inputText" />
+      <button type="submit">Submit</button>
+    </form>
+  </body>
+</html>
+```
+
+### 결과
+
+![HELLO 출력 결과](/blogimage/ajax-parse-xml-20240220-095227.png)
+
+- 주소 표시줄의 URL이 변경되며 페이지가 새로고침된 후에야 `HELLO`를 출력한다.
+
+## 2단계: 입력 문자열 Ajax 출력하기
+
+### Controller (1단계 동일)
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class SubmitController {
+	@PostMapping("/submit")
+	@ResponseBody
+	public String postSubmit(@RequestParam("inputText") String inputText) {
+		System.out.println(inputText);
+		return inputText;
+	}
+}
+```
+
+### View
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $('form').submit(function (event) {
+          event.preventDefault() // Prevent the form from submitting normally
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // Send an AJAX request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            success: function (response) {
+              // Append the response data under the form
+              $('#formContainer').append('<p>' + response + '</p>')
+            },
+            error: function () {
+              alert('An error occurred')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <div id="formContainer">
+      <form>
+        <label for="inputText">Input Text:</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>
+```
+
+### 결과
+
+![AJAX HELLO 출력 결과](/blogimage/ajax-parse-xml-20240220-095254.png)
+
+- 주소 표시줄의 URL이 변경되지도 않으며, 페이지 새로고침이 발생하지도 않는다.
+
+## 3단계: 로컬 XML 파일 불러오기
+
+### Mock 데이터 XML 생성
+
+1. https://mockaroo.com/
+   다음 조건으로 Mock 데이터 XML 파일을 3회 생성하여 이름을 각각 `data1`, `data2`, `data3`으로 설정한다.
+   ![Mockaroo mock data 생성](/blogimage/ajax-parse-xml-20240220-095321.png)
+2. 저장 경로: `/src/main/resources/data[1~3].xml`
+   ![Eclipse 프로젝트 경로](/blogimage/ajax-parse-xml-20240220-095356.png)
+
+### Controller
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class SubmitController {
+	@Autowired
+    private ResourceLoader resourceLoader;
+
+	@PostMapping("/submit")
+    @ResponseBody
+    public String postSubmit(@RequestParam("inputText") String inputText) {
+        System.out.println("[Debug] inputText: " + inputText);
+        try {
+        	Resource resource = resourceLoader.getResource("classpath:" + inputText);
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+            System.out.println("[Debug] content: " + content);
+            return content;
+            // RestTemplate restTemplate = new RestTemplate();
+            // return restTemplate.getForObject(absolutePath, String.class);
+        } catch (Exception e) {
+            System.out.println("[Debug] Exception: " + e.toString());
+            return "Exception: " + e.toString();
+        }
+    }
+}
+```
+
+### View (2단계 동일)
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $('form').submit(function (event) {
+          event.preventDefault() // Prevent the form from submitting normally
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // Send an AJAX request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            success: function (response) {
+              // Append the response data under the form
+              $('#formContainer').append('<p>' + response + '</p>')
+            },
+            error: function () {
+              alert('An error occurred')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <div id="formContainer">
+      <form>
+        <label for="inputText">Input Text:</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </body>
+</html>
+```
+
+### 결과
+
+![data1.xml 내용 그대로 출력하기](/blogimage/ajax-parse-xml-20240220-095436.gif)
+
+## 4단계: 로컬 XML 파싱
+
+### Controller (3단계 동일)
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+@Controller
+public class SubmitController {
+	@Autowired
+    private ResourceLoader resourceLoader;
+
+	@PostMapping("/submit")
+    @ResponseBody
+    public String postSubmit(@RequestParam("inputText") String inputText) {
+        System.out.println("[Debug] inputText: " + inputText);
+        try {
+        	Resource resource = resourceLoader.getResource("classpath:" + inputText);
+            String content = new String(Files.readAllBytes(resource.getFile().toPath()));
+            System.out.println("[Debug] content: " + content);
+            return content;
+            // RestTemplate restTemplate = new RestTemplate();
+            // return restTemplate.getForObject(absolutePath, String.class);
+        } catch (Exception e) {
+            System.out.println("[Debug] Exception: " + e.toString());
+            return "Exception: " + e.toString();
+        }
+    }
+}
+```
+
+### View
+
+```html
+<!doctype html>
+<html>
+  <head>
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <script>
+      $(document).ready(function () {
+        $('form').submit(function (event) {
+          // Prevent the form from submitting normally
+          event.preventDefault()
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // AJAX POST request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            success: function (response) {
+              console.log('[Debug] response: ' + $(response))
+              var $records = $(response).find('record')
+              console.log('[Debug] $records: ' + $records)
+              if ($records.length > 0) {
+                $records = $records.slice(0, 5)
+                var $ulTag = $('<ul />')
+                $.each($records, function (index, value) {
+                  var $first_name = $(value).find('first_name').text()
+                  var $liTag = $('<li />').append($first_name)
+                  $ulTag.append($liTag)
+                })
+                $('#result').html($ulTag)
+              } else {
+                $('#result').text('[Error] No records found')
+              }
+            },
+            error: function () {
+              $('#result').text('[Error] No records found')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+  <body>
+    <div id="formContainer">
+      <form>
+        <label for="inputText">Input Text:</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+        <div id="result"></div>
+      </form>
+    </div>
+  </body>
+</html>
+```
+
+### 결과
+
+![](/blogimage/ajax-parse-xml-20240220-095627.gif)
+
+## 5단계: 원격 XML 파싱
+
+### Controller
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+
+@Controller
+public class SubmitController {
+	@PostMapping("/submit")
+    @ResponseBody
+    public String postSubmit(@RequestParam("inputText") String inputText) {
+        // System.out.println("[Debug] inputText: " + inputText);
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String content = restTemplate.getForObject(inputText, String.class);
+            if (content != null) {
+                // String header = content.split("<item>")[0];
+                // System.out.println("[Debug] header: \n" + header);
+                return content;
+            } else {
+                System.out.println("[Debug] content is null");
+                return "Content is null";
+            }
+        } catch (Exception e) {
+            System.out.println("[Debug] Exception: " + e.toString());
+            return "Exception: " + e.toString();
+        }
+    }
+}
+```
+
+### View
+
+```html
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <style>
+      #container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      form {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+
+      label {
+        margin-right: 10px;
+        font-size: 16px;
+      }
+
+      input {
+        margin-right: 10px;
+        width: 400px;
+      }
+
+      button {
+        margin-right: 10px;
+      }
+
+      #result {
+        margin-top: 10px;
+        font-size: 16px;
+      }
+    </style>
+    <script>
+      $(function () {
+        $('form').submit(function (event) {
+          // Prevent the form from submitting normally
+          event.preventDefault()
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // AJAX POST request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            dataType: 'xml',
+            success: function (response) {
+              // console.log("[Debug] response: " + response);
+              var $item = $(response).find('item')
+              // console.log("[Debug] $item: " + $item.html());
+              if ($item.length > 0) {
+                $item = $item.slice(0, 10)
+                var $ulTag = $('<ul />')
+                $.each($item, function (index, object) {
+                  var $title = $(object).find('title').text()
+                  var $link = $(object).find('link').text()
+                  // console.log("[Debug] $title: " + $title);
+                  // console.log("[Debug] $link: " + $link);
+
+                  var $aTag = $('<a />')
+                    .attr({
+                      href: $link,
+                      target: '_blank',
+                    })
+                    .text($title)
+
+                  var $liTag = $('<li />').append($aTag)
+                  $ulTag.append($liTag)
+                })
+                $('#result').html($ulTag)
+              } else {
+                $('#result').text('[Error] No items found')
+              }
+            },
+            error: function () {
+              $('#result').text('[Error] No items found')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+
+  <body>
+    <div id="container">
+      <form>
+        <label for="inputText">Input Text</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+      </form>
+      <div id="result"><h4>여기 뉴스가 표시됩니다.</h4></div>
+    </div>
+  </body>
+</html>
+```
+
+### 결과
+
+![뉴스 제목 표시하기](/blogimage/ajax-parse-xml-20240220-095713.gif)
+
+- [SBS 뉴스 RSS 피드](https://news.sbs.co.kr/news/rss.do) 등 언론사에서 제공하는 XML을 출력하는 URL를 입력했다.
+
+## 6단계: @Controller → @RestController 대체
+
+### Controller
+
+- `@Controller` + `@ResponseBody` => `@RestController`
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+
+@RestController
+public class SubmitController {
+    @PostMapping("/submit")
+    public String handleSubmit(@RequestParam("inputText") String inputText) {
+        // System.out.println("[Debug] inputText: " + inputText);
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            if (inputText == null || inputText.equals("")) {
+                // System.out.println("[Debug] inputText is null");
+                return "";
+            }
+            String content = restTemplate.getForObject(inputText, String.class);
+            if (content != null) {
+                // String header = content.split("<item>")[0];
+                // System.out.println("[Debug] header: \n" + header);
+                return content;
+            } else {
+                // System.out.println("[Debug] content is null");
+                return "";
+            }
+        } catch (Exception e) {
+            System.out.println("[Debug] Exception: " + e.toString());
+            return "Exception: " + e.getMessage();
+        }
+    }
+}
+```
+
+### View (5단계 동일)
+
+```html
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <!-- style 태그 생략 -->
+    <script>
+      $(function () {
+        $('form').submit(function (event) {
+          // Prevent the form from submitting normally
+          event.preventDefault()
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // AJAX POST request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            dataType: 'xml',
+            success: function (response) {
+              // console.log("[Debug] response: " + response);
+              var $item = $(response).find('item')
+              // console.log("[Debug] $item: " + $item.html());
+              if ($item.length > 0) {
+                $item = $item.slice(0, 10)
+                var $ulTag = $('<ul />')
+                $.each($item, function (index, object) {
+                  var $title = $(object).find('title').text()
+                  var $link = $(object).find('link').text()
+                  // console.log("[Debug] $title: " + $title);
+                  // console.log("[Debug] $link: " + $link);
+
+                  var $aTag = $('<a />')
+                    .attr({
+                      href: $link,
+                      target: '_blank',
+                    })
+                    .text($title)
+
+                  var $liTag = $('<li />').append($aTag)
+                  $ulTag.append($liTag)
+                })
+                $('#result').html($ulTag)
+              } else {
+                $('#result').text('[Error] No items found')
+              }
+            },
+            error: function () {
+              $('#result').text('[Error] No items found')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+
+  <body>
+    <div id="container">
+      <form>
+        <label for="inputText">Input Text</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+      </form>
+      <div id="result"><h4>여기 뉴스가 표시됩니다.</h4></div>
+    </div>
+  </body>
+</html>
+```
+
+### 결과 (5단계 동일)
+
+![뉴스 제목 표시하기](/blogimage/ajax-parse-xml-20240220-095713.gif)
+
+## 7단계: RestTemplate → WebClient 대체
+
+- RestTemplate VS WebClient 비교 설명 글
+  [[SpringBoot] RestTemplate 에서 WebClient로 속도 개선하기](https://velog.io/@yevini118/SpringBoot-RestTemplate-에서-WebClient로-속도-개선기)
+
+### Controller
+
+```java
+package kosmo.newsxml.controller;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import reactor.core.publisher.Mono;
+
+@RestController
+public class SubmitController {
+    @PostMapping(value = "/submit", produces = MediaType.TEXT_XML_VALUE)
+    public Mono<String> postSubmit(@RequestParam("inputText") String inputText) {
+        // System.out.println("[Debug] inputText: " + inputText);
+    	final WebClient client = WebClient.create();
+		return client.get().uri(inputText)
+				.retrieve().bodyToMono(String.class);
+    }
+}
+```
+
+### View (5단계 동일)
+
+```html
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Input Form</title>
+    <script src="https://code.jquery.com/jquery.min.js"></script>
+    <!-- style 태그 생략 -->
+    <script>
+      $(function () {
+        $('form').submit(function (event) {
+          // Prevent the form from submitting normally
+          event.preventDefault()
+
+          // Get the input value
+          var inputText = $('#inputText').val()
+
+          // AJAX POST request to the server
+          $.ajax({
+            url: '/submit',
+            type: 'POST',
+            data: { inputText: inputText },
+            dataType: 'xml',
+            success: function (response) {
+              // console.log("[Debug] response: " + response);
+              var $item = $(response).find('item')
+              // console.log("[Debug] $item: " + $item.html());
+              if ($item.length > 0) {
+                $item = $item.slice(0, 10)
+                var $ulTag = $('<ul />')
+                $.each($item, function (index, object) {
+                  var $title = $(object).find('title').text()
+                  var $link = $(object).find('link').text()
+                  // console.log("[Debug] $title: " + $title);
+                  // console.log("[Debug] $link: " + $link);
+
+                  var $aTag = $('<a />')
+                    .attr({
+                      href: $link,
+                      target: '_blank',
+                    })
+                    .text($title)
+
+                  var $liTag = $('<li />').append($aTag)
+                  $ulTag.append($liTag)
+                })
+                $('#result').html($ulTag)
+              } else {
+                $('#result').text('[Error] No items found')
+              }
+            },
+            error: function () {
+              $('#result').text('[Error] No items found')
+            },
+          })
+        })
+      })
+    </script>
+  </head>
+
+  <body>
+    <div id="container">
+      <form>
+        <label for="inputText">Input Text</label>
+        <input type="text" id="inputText" name="inputText" />
+        <button type="submit">Submit</button>
+      </form>
+      <div id="result"><h4>여기 뉴스가 표시됩니다.</h4></div>
+    </div>
+  </body>
+</html>
+```
+
+### 결과 (5단계 동일)
+
+![뉴스 제목 표시하기](/blogimage/ajax-parse-xml-20240220-095713.gif)
