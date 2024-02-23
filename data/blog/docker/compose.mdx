@@ -1,0 +1,64 @@
+---
+title: docker-compose 사용법 (Next.js + SpringBoot)
+date: '2024-02-21'
+tags: ['docker']
+draft: false
+summary:
+---
+
+# docker-compose.yml
+
+(yml 파일 내용)
+
+# Troubleshooting
+
+## ❌ Ports are not available
+
+### 오류 내용
+
+입력
+
+```
+docker compose up
+```
+
+출력
+
+```
+Error response from daemon: Ports are not available: exposing port TCP 0.0.0.0:3306 -> 0.0.0.0:0: listen tcp 0.0.0.0:3306: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.
+```
+
+### 원인
+
+Docker 컨테이너 이전에 로컬 환경에서 실행되고 있는 MySQL이 실행 중이라 3306 포트를 이미 사용 중이다.
+
+### 해결
+
+1. 3306번 포트를 사용중인 프로세스가 있는지 찾는다.
+
+```
+(Windows) netstat -ano | findstr 3306
+(Linux) lsof -i :3306
+```
+
+```
+ TCP    0.0.0.0:3306           0.0.0.0:0              LISTENING       4888
+ TCP    0.0.0.0:33060          0.0.0.0:0              LISTENING       4888
+ TCP    [::]:3306              [::]:0                 LISTENING       4888
+ TCP    [::]:33060             [::]:0                 LISTENING       4888
+```
+
+2. 실행중인 프로세스가 있다면 종료한다.
+
+```
+(Windows) taskkill /pid 4888 /f /t
+(Linux) kill 4888
+```
+
+3. (윈도우) 이렇게도 가능하다. 서비스에서 MySQL80을 종료.
+
+```
+services.msc
+```
+
+![](/blogimage/compose-20240221-182146.png)
